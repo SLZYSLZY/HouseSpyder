@@ -52,7 +52,7 @@ HouseTradeDataFollower = []
 # 是否满五年
 HouseTradeDataAgeProperty = []
 # 挂牌价
-HouseTradeDataListPrise = []
+HouseTradeDataListPrice = []
 # 成交价
 HouseTradeTransactionPrice = []
 
@@ -82,6 +82,7 @@ for i in range(2, 101):
 
 def get_primary_data(primary_page_url):
     html = requests.get(primary_page_url).text
+    time.sleep(5)
     sp = BeautifulSoup(html, "lxml")
     item_list = sp.body.find_all(class_='listContent')[0].contents
     for j in range(0, len(item_list)):
@@ -105,10 +106,12 @@ def get_primary_data(primary_page_url):
 
         # 成交日期
         deal_date = item_list[j].div.find_all(class_='dealDate')[0].text
+        HouseTradeDataTradeTime.append(deal_date)
         print(deal_date)
 
         # 成交价
-        total_price = item_list[j].div.find_all(class_='totalPrice')[0].text
+        total_price = item_list[j].div.find_all(class_='totalPrice')[0].text.replace('万', '')
+        HouseTradeTransactionPrice.append(total_price)
         print(total_price)
 
         # 挂牌价 成交周期
@@ -117,6 +120,7 @@ def get_primary_data(primary_page_url):
         result = pattern.findall(deal_info)
         list_price = result[0]
         trade_cycle = result[1]
+        HouseTradeDataListPrice.append(list_price)
         print(list_price, trade_cycle)
 
         detail_page_url = item_list[j].div.find_all(class_='title')[0].a['href']
@@ -125,9 +129,18 @@ def get_primary_data(primary_page_url):
 
 
 def get_detail_data(detail_page_url):
+    time.sleep(2)
     html_1 = requests.get(detail_page_url).text
     sp = BeautifulSoup(html_1, "lxml")
+    location_info = sp.body.find_all(class_='deal-bread')[0].text.split('>')
+    primary_district = re.findall(r'(\w+)二手房成交', location_info[2])[0]
+    secondary_district = re.findall(r'(.+)二手房成交', location_info[3])[0]
+    HouseBasicDataPrimaryDistrict.append(primary_district)
+    HouseBasicDataSecondaryDistrict.append(secondary_district)
+    print(primary_district, secondary_district)
     house_follow = sp.body.find_all(class_='msg')[0].contents[4].label.text
+    HouseTradeDataFollower.append(house_follow)
+    print(house_follow)
     base_info_contents = sp.body.find_all(class_='content')[0].ul.contents
     for item in base_info_contents:
         base_info_label = item.span.text
@@ -139,54 +152,72 @@ def get_detail_data(detail_page_url):
                 bedroom_num = re_res[0][0]
             else:
                 bedroom_num = None
+            HouseBasicDataBedroom.append(bedroom_num)
+
             re_res = re.findall(r'[0-9]厅', base_info_value)
             if len(re_res) != 0:
                 livingroom_num = re_res[0][0]
+
             else:
                 livingroom_num = None
+            HouseBasicDataLivingRoom.append(livingroom_num)
+
             re_res = re.findall(r'[0-9]厨', base_info_value)
             if len(re_res) != 0:
                 kitchen_num = re_res[0][0]
             else:
                 kitchen_num = None
+            HouseBasicDataKitchen.append(kitchen_num)
+
             re_res = re.findall(r'[0-9]卫', base_info_value)
             if len(re_res) != 0:
                 bathroom_num = re_res[0][0]
             else:
                 bathroom_num = None
+            HouseBasicDataBathroom.append(bathroom_num)
+
             print(bedroom_num, livingroom_num, kitchen_num, bathroom_num)
 
         if base_info_label == '所在楼层':
-            floor = re.findall(r'([中|高|低])楼层', base_info_value)[0]
-            total_floor = re.findall(r'共([0-9]+)层', '中楼层(共23层)')[0]
+            floor = re.findall(r'(.+)\(共', base_info_value)[0]
+            total_floor = re.findall(r'共([0-9]+)层', base_info_value)[0]
+            HouseBasicDataTotalFloor.append(total_floor)
+            HouseBasicDataFloor.append(floor)
             print(floor, total_floor)
 
         if base_info_label == '建筑面积':
             square = re.findall(r'([0-9]+(\.[0-9]+)?)㎡', base_info_value)[0][0]
+            HouseBasicDataSquare.append(square)
             print(square)
 
         if base_info_label == '户型结构':
             house_struct = base_info_value
+            HouseBasicDataHouseStructure.append(house_struct)
             print(house_struct)
 
         if base_info_label == '建筑类型':
             building_type = base_info_value
+            HouseBasicDataBuildingType.append(building_type)
             print(building_type)
 
         if base_info_label == '房屋朝向':
             face = base_info_value
+            HouseBasicDataOrientation.append(face)
             print(face)
 
         if base_info_label == '建成年代':
             built_age = base_info_value
+            HouseBasicDataBuiltYear.append(built_age)
             print(built_age)
 
         if base_info_label == '装修情况':
             condition = base_info_value
+            HouseBasicDataRenovationCondition.append(condition)
             print(condition)
 
         if base_info_label == '建筑结构':
             building_struct = base_info_value
+            HouseBasicDataBuildingStructure.append(building_struct)
             print(building_struct)
 
         if base_info_label == '梯户比例':
@@ -195,88 +226,106 @@ def get_detail_data(detail_page_url):
             if b == 0:
                 ratio = None
             else:
-                ratio = a/b
+                ratio = a / b
             print(ratio)
+            HouseBasicDataStairsHouseRatio.append(ratio)
 
         if base_info_label == '配备电梯':
-            has_env = base_info_value
-            print(has_env)
+            has_elv = base_info_value
+            HouseBasicDataHasElevator.append(has_elv)
+            print(has_elv)
 
-get_primary_data(base_url)
-
-'香堤澜湾 2室2厅 76.11平米'
-
-'''
-class HouseSpider():
-    def __init__(self):
-        # 通过fake_useragent库，随机切换UserAgent,简单伪装爬虫
-        self.headers = {'User-Agent': UserAgent().random}
-
-    def all_page_url(self, url):
-        for i in range(1, 24):  # 一共24页数据
-            page_url = url + str(i) + "/"  # 生成了24页的url地址
-            self.one_page(page_url)
-        print("Done")
-
-    def request(self, page_url):
-        # 使用get方式发送请求
-        html = requests.get(page_url, headers=self.headers)
-        time.sleep(random.randint(1, 4))  # 随机时间休眠
-        html.encoding = "GBK"  # 解决中文乱码问题
-        return html
-
-    def one_page(self, page_url):
-        page_html = self.request(page_url)
-        sp = BeautifulSoup(page_html.text, "lxml")  # 使用lxml解析方式
-        first = sp.find_all(class_='nlcd_name')  # 抓取class属性为=“nlcd_name”对应的内容
-
-        # 抓取楼盘名称
-        for name in first:  # 依次取出first里面的每一条内容
-            name1 = name.find_all("a")  # 查找first中a标签的内容
-            for name2 in name1:
-                a_name.append(name2.get_text().strip())  # 通过get_text()获取name2的内容，并添加到a_name列表里面。
-        print(len(a_name))  # 打印出每一次循环以后a_name列表的长度，每一次循环对应一页的内容，该长度代表每一页抓取到的数量
-
-        # 抓取楼盘所处区域
-        Address = sp.find_all(class_="address")
-        for address in Address:
-            for address1 in address.select("a"):  # 通过select选择器选择address里面的a标签。
-                b_address.append(address1.text.strip()[0:5].strip())
-        print(len(b_address))
-
-        # 抓取楼盘价格
-        Price = sp.find_all(class_="nhouse_price")  # 找到所有的Price，以列表形式保存
-        for price in Price:
-            # 这里select的是有明确价格与价格待定的
-            for price1 in price.select("span"):
-                c_price.append(price1.get_text())
-            # 这里select的是价格待定、往期的
-            for price2 in price.select('div > div.nlc_details > div.nhouse_price > label:nth-of-type(1)'):
-                c_price.append(price2.get_text())
-                # 这里select的是新房已卖出的
-        for price3 in sp.select(' div > div.nlc_details > div.kanesf > p > a'):
-            c_price.append(price3.get_text())
-        print(len(c_price))
-
-        # 开始抓取楼盘对应评论数量的循环，循环注释与前面类似
-        value_num = sp.find_all(class_="house_value clearfix")
-        for j in value_num:
-            value_num2 = j.find(class_="value_num")
-            if value_num2:
-                d_comment_value.append(value_num2.get_text()[1:-4])
-            else:
-                d_comment_value.append('0')
-        print(len(d_comment_value))
-
-    # 保存数据到指定路径的csv文件
-    def data_save(self):
-        data = {"name": a_name, "address": b_address, "price": c_price, "comments": d_comment_value}  # 生成字典
-        house = pd.DataFrame(data)  # 创建DataFrame对象
-        # encoding='utf_8_sig'为了让保存下来的中文不出现乱码,index=False是不需要索引
-        house.to_csv('D:\pachong\pachong_suzhouf.csv', index=False, encoding='utf_8_sig')
+    trade_info_contents = sp.body.find_all(class_='content')[1].ul.contents
+    for item in trade_info_contents:
+        base_info_label = item.span.text
+        base_info_value = item.text.replace(' ', '').replace(base_info_label, '')
+        print(base_info_label, ':', base_info_value)
+        if base_info_label == '链家编号':
+            id = base_info_value
+            HouseBasicDataId.append(id)
+            print(id)
+        if base_info_label == '房屋年限':
+            age = base_info_value
+            HouseTradeDataAgeProperty.append(age)
+            print(age)
+        if base_info_label == '挂牌时间':
+            HouseTradeDataDaysOnMarket.append(base_info_value)
 
 
-suzhou = HouseSpider()
-suzhou.all_page_url("https://suzhou.newhouse.fang.com/house/s/b9")
-suzhou.data_save()
-'''
+for index, item in enumerate(page_url):
+    #try:
+    if index <= 52:
+        continue
+    else:
+        get_primary_data(item)
+        #except:
+        print(item)
+        house_data = pd.DataFrame({
+            'Id': HouseBasicDataId,
+            'square': HouseBasicDataSquare,
+            'livingRoom': HouseBasicDataLivingRoom,
+            'bedRoom': HouseBasicDataBedroom,
+            'Kitchen': HouseBasicDataKitchen,
+            'bathroom': HouseBasicDataBathroom,
+            'totalFloor': HouseBasicDataTotalFloor,
+            'floor': HouseBasicDataFloor,
+            'buildingStructure': HouseBasicDataBuildingStructure,
+            'builtYear': HouseBasicDataBuiltYear,
+            'renovationCondition': HouseBasicDataRenovationCondition,
+            'buildingType': HouseBasicDataBuildingType,
+            'houseStructure': HouseBasicDataHouseStructure,
+            'stairsHouseRatio': HouseBasicDataStairsHouseRatio,
+            'hasElevator': HouseBasicDataHasElevator,
+            'secondaryDistrict': HouseBasicDataSecondaryDistrict,
+            'primaryDistrict': HouseBasicDataPrimaryDistrict,
+            'orientation': HouseBasicDataOrientation,
+            'tradeTime': HouseTradeDataTradeTime,
+            'daysOnMarket': HouseTradeDataDaysOnMarket,
+            'follower': HouseTradeDataFollower,
+            'ageProperty': HouseTradeDataAgeProperty,
+            'listPrice': HouseTradeDataListPrice,
+            'transactionPrice': HouseTradeTransactionPrice,
+        })
+        house_data.to_csv('./' + str(index) + '.csv', encoding='utf-8')
+        HouseBasicDataId = []
+        HouseBasicDataSquare = []
+        HouseBasicDataLivingRoom = []
+        HouseBasicDataBedroom = []
+        HouseBasicDataKitchen = []
+        HouseBasicDataBathroom = []
+        # 总楼层
+        HouseBasicDataTotalFloor = []
+        HouseBasicDataFloor = []
+        # 建筑结构
+        HouseBasicDataBuildingStructure = []
+        # 建成年代
+        HouseBasicDataBuiltYear = []
+        # 装修情况
+        HouseBasicDataRenovationCondition = []
+        # 建筑类型
+        HouseBasicDataBuildingType = []
+        # 户型结构
+        HouseBasicDataHouseStructure = []
+        # 梯户比
+        HouseBasicDataStairsHouseRatio = []
+        HouseBasicDataHasElevator = []
+        HouseBasicDataSecondaryDistrict = []
+        HouseBasicDataPrimaryDistrict = []
+        HouseBasicDataOrientation = []
+    
+        # 交易属性
+        # 小区均价
+        HouseTradeDataCommunityAveragePrice = []
+        # 成交时间
+        HouseTradeDataTradeTime = []
+        # 挂牌时间
+        HouseTradeDataDaysOnMarket = []
+        # 关注人数
+        HouseTradeDataFollower = []
+        # 是否满五年
+        HouseTradeDataAgeProperty = []
+        # 挂牌价
+        HouseTradeDataListPrice = []
+        # 成交价
+        HouseTradeTransactionPrice = []
+
