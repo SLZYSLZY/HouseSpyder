@@ -221,8 +221,8 @@ def get_detail_data(detail_page_url):
             print(building_struct)
 
         if base_info_label == '梯户比例':
-            a = zh2num[re.findall(r'([\w])梯', base_info_value)[0]]
-            b = zh2num[re.findall(r'([\w])户', base_info_value)[0]]
+            a = zh2num[re.findall(r'([\w]+)梯', base_info_value)[0]]
+            b = zh2num[re.findall(r'(梯[\w]+)户', base_info_value)[0]]
             if b == 0:
                 ratio = None
             else:
