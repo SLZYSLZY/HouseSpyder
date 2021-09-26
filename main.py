@@ -11,7 +11,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import time
 import os
-
+from get_url import get_suburl
 
 # 要爬取的数据：
 # 基础属性
@@ -58,13 +58,6 @@ HouseTradeDataListPrice = []
 HouseTradeTransactionPrice = []
 
 pattern = re.compile(r'[0-9]+')  # 查找数字
-base_url = 'https://su.lianjia.com/chengjiao/wuzhong/'
-page_url = []
-page_url.append(base_url)
-
-# 创建所有的成交页面地址
-for i in range(2, 101):
-    page_url.append(base_url + 'pg' + str(i))
 
 
 def get_primary_data(primary_page_url):
@@ -238,14 +231,24 @@ def get_detail_data(detail_page_url):
 
 if __name__ == '__main__':
     # 此处可以选择从哪一页开始爬,0-99对应链家网的1-100页
-    start_page = 35
+    base_url = 'https://su.lianjia.com/chengjiao/gongyeyuan/'
+    page_url = get_suburl(base_url)
+    # page_url = []
+    # page_url.append(base_url)
+
+    # 创建所有的成交页面地址
+    for i in range(2, 101):
+        page_url.append(base_url + 'pg' + str(i))
+    start_page = 82
     filepath = './houseDatawuzhong.csv'
     for index, item in enumerate(page_url):
         if index < start_page:
             continue
         else:
             print(index)
+            # try:
             get_primary_data(item)
+            # except web
             print(item)
             house_data = pd.DataFrame({
                 'Id': HouseBasicDataId,
