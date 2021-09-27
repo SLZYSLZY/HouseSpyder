@@ -7,7 +7,7 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 import json
-
+import time
 
 def get_suburl(base_url):
     html = requests.get(base_url).text
@@ -26,6 +26,7 @@ def get_suburl(base_url):
 
     sub_list = []
     for item in list3:
+        time.sleep(2)
         html = requests.get('https://su.lianjia.com' + item['href']).text
         sp = BeautifulSoup(html, "lxml")
         total_page = json.loads(sp.body.find_all(class_='page-box house-lst-page-box')[0]['page-data'])['totalPage']
